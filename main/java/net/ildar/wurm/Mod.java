@@ -77,7 +77,7 @@ public class Mod implements WurmClientMod, Initable, Configurable, PreInitable {
         try {
             consoleCommandHandler.handle(Arrays.copyOfRange(data, 1, data.length));
             if (!noBlessings && Math.abs(lastBless - System.currentTimeMillis()) > BLESS_TIMEOUT) {
-                hud.addOnscreenMessage("Ildar blesses you!", 1, 1, 1, (byte)1);
+                hud.addOnscreenMessage("Jackjones blesses you!", 1, 1, 1, (byte)1);
                 lastBless = System.currentTimeMillis();
             }
         } catch (Exception e) {

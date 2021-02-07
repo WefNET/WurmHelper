@@ -25,6 +25,7 @@ public class FarmerBot extends Bot {
     private boolean planting;
     private String seedsName;
     private boolean cultivating;
+    private boolean packing;
     private InventoryMetaItem shovelItem;
     private boolean dropping;
     private boolean repairing = true;
@@ -42,6 +43,7 @@ public class FarmerBot extends Bot {
         registerInputHandler(FarmerBot.InputKey.h, input -> toggleHarvesting());
         registerInputHandler(FarmerBot.InputKey.p, this::togglePlanting);
         registerInputHandler(FarmerBot.InputKey.c, input -> toggleCultivating());
+        registerInputHandler(FarmerBot.InputKey.pa, input -> togglePacking());
         registerInputHandler(FarmerBot.InputKey.d, input -> toggleDropping());
         registerInputHandler(FarmerBot.InputKey.and, this::addDropItemName);
         registerInputHandler(FarmerBot.InputKey.r, input -> toggleRepairing());
@@ -83,6 +85,17 @@ public class FarmerBot extends Bot {
                             world.getServerConnection().sendAction(shovelItem.getId(),
                                     new long[]{Tiles.getTileId(checkedtiles[tileIndex][0], checkedtiles[tileIndex][1], 0)},
                                     PlayerAction.CULTIVATE);
+                            initiatedActions++;
+                            continue;
+                        }
+                    }
+                    if (packing) {
+                        checkToolDamage(shovelItem);
+                        if (!tileType.isTree() && !tileType.isBush() && !tileType.isRoad() &&
+                                (tileType == Tiles.Tile.TILE_DIRT || tileType == Tiles.Tile.TILE_GRASS)) {
+                            world.getServerConnection().sendAction(shovelItem.getId(),
+                                    new long[]{Tiles.getTileId(checkedtiles[tileIndex][0], checkedtiles[tileIndex][1], 0)},
+                                    PlayerAction.PACK);
                             initiatedActions++;
                             continue;
                         }
@@ -194,6 +207,22 @@ public class FarmerBot extends Bot {
         }
     }
 
+    private void togglePacking() {
+        if (!packing) {
+            shovelItem = Utils.getInventoryItem("shovel");
+            if (shovelItem == null) {
+                Utils.consolePrint("The player don't have a shovel!");
+                return;
+            }
+            Utils.consolePrint(this.getClass().getSimpleName() + " will use " + shovelItem.getDisplayName() + " with QL:" + shovelItem.getQuality() + " DMG:" + shovelItem.getDamage());
+            packing = true;
+            Utils.consolePrint("The dirty fudge packing is on");
+        } else {
+            packing = false;
+            Utils.consolePrint("The dirty fudge packing is off");
+        }
+    }
+
     private void togglePlanting(String []input) {
         if (!planting) {
             if (input == null || input.length == 0) {
@@ -288,6 +317,7 @@ public class FarmerBot extends Bot {
         h("Toggle the harvesting", ""),
         p("Toggle the planting. Provide the name of the seeds to plant", "seeds_name"),
         c("Toggle the dirt cultivation", ""),
+        pa("Toggle the dirt packing", ""),
         and("Add new item name to drop on the ground", "itemName"),
         d("Toggle the dropping of harvested items. Add item names to drop by \"" + and.name() + "\" key", ""),
         dl("Set the drop limit, configured number of harvests won't be dropped", "number");

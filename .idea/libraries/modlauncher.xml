@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="modlauncher">
+    <CLASSES>
+      <root url="jar://D:/SteamLibrary/steamapps/common/Wurm Unlimited/WurmLauncher/modlauncher.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
