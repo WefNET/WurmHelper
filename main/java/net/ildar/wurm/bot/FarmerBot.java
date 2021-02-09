@@ -26,6 +26,7 @@ public class FarmerBot extends Bot {
     private String seedsName;
     private boolean cultivating;
     private boolean packing;
+    private boolean paving;
     private InventoryMetaItem shovelItem;
     private boolean dropping;
     private boolean repairing = true;
@@ -44,6 +45,7 @@ public class FarmerBot extends Bot {
         registerInputHandler(FarmerBot.InputKey.p, this::togglePlanting);
         registerInputHandler(FarmerBot.InputKey.c, input -> toggleCultivating());
         registerInputHandler(FarmerBot.InputKey.pa, input -> togglePacking());
+        registerInputHandler(FarmerBot.InputKey.v, input -> togglePaving());
         registerInputHandler(FarmerBot.InputKey.d, input -> toggleDropping());
         registerInputHandler(FarmerBot.InputKey.and, this::addDropItemName);
         registerInputHandler(FarmerBot.InputKey.r, input -> toggleRepairing());
@@ -73,9 +75,14 @@ public class FarmerBot extends Bot {
                 int tileIndex = -1;
 
                 List<InventoryMetaItem> seeds = null;
+                List<InventoryMetaItem> bricks = null;
                 int usedSeeds = 0;
+                int usedBricks = 0;
                 if (planting)
                     seeds = Utils.getInventoryItems(seedsName);
+                if (paving)
+                    bricks = Utils.getInventoryItems("stone brick");
+
                 while(++tileIndex < checkedtiles.length && initiatedActions < maxActions) {
                     Tiles.Tile tileType = world.getNearTerrainBuffer().getTileType(checkedtiles[tileIndex][0], checkedtiles[tileIndex][1]);
                     byte tileData = world.getNearTerrainBuffer().getData(checkedtiles[tileIndex][0], checkedtiles[tileIndex][1]);
@@ -132,6 +139,22 @@ public class FarmerBot extends Bot {
                                 world.getServerConnection().sendAction(seeds.get(usedSeeds++).getId(),
                                         new long[]{Tiles.getTileId(checkedtiles[tileIndex][0], checkedtiles[tileIndex][1], 0)},
                                         PlayerAction.SOW);
+                                initiatedActions++;
+                                continue;
+                            }
+                        }
+                    }
+                    if (paving) {
+                        if (tileType == Tiles.Tile.TILE_DIRT_PACKED) {
+                            if (bricks == null || bricks.size() == 0)
+                                Utils.consolePrint("Inventory lacks stone bricks for paving");
+                            else {
+                                if (usedBricks > bricks.size() - 2)
+                                    continue;
+
+                                world.getServerConnection().sendAction(bricks.get(usedBricks++).getId(),
+                                        new long[]{Tiles.getTileId(checkedtiles[tileIndex][0], checkedtiles[tileIndex][1], 0)},
+                                        PlayerAction.PAVE);
                                 initiatedActions++;
                                 continue;
                             }
@@ -241,6 +264,17 @@ public class FarmerBot extends Bot {
         }
     }
 
+    private void togglePaving() {
+        if (!paving) {
+            this.seedsName = "stone brick";
+            Utils.consolePrint(this.getClass().getSimpleName() + " will plant " + this.seedsName);
+            paving = true;
+        } else {
+            paving = false;
+            Utils.consolePrint("Paving is off");
+        }
+    }
+
     private void toggleHarvesting() {
         if (!harvesting) {
             scytheItem = Utils.getInventoryItem("scythe");
@@ -318,6 +352,7 @@ public class FarmerBot extends Bot {
         p("Toggle the planting. Provide the name of the seeds to plant", "seeds_name"),
         c("Toggle the dirt cultivation", ""),
         pa("Toggle the dirt packing", ""),
+        v("Toggle the paving mode", ""),
         and("Add new item name to drop on the ground", "itemName"),
         d("Toggle the dropping of harvested items. Add item names to drop by \"" + and.name() + "\" key", ""),
         dl("Set the drop limit, configured number of harvests won't be dropped", "number");
